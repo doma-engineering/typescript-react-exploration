@@ -12,8 +12,17 @@
       devShell.x86_64-linux =
         pkgs.mkShell {
           buildInputs = [
+
+            pkgs.libsodium
+            pkgs.elixir
+            pkgs.erlang
+
             pkgs.nodejs-17_x
+
             npkgs.typescript
+            npkgs.node-gyp
+            npkgs.serve
+
           ];
         };
     };
