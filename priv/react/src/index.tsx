@@ -5,14 +5,24 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { RecoilRoot } from 'recoil';
 
-const root = ReactDOM.createRoot(document.getElementById('root')!);
-root.render(
+// const root = ReactDOM.createRoot(document.getElementById('root')!);
+// root.render(
+//   <RecoilRoot>
+//     <React.StrictMode>
+//       <App />
+//     </React.StrictMode>,
+//   </RecoilRoot>
+// )
+
+const relement = document.getElementById('root')!;
+ReactDOM.render(
   <RecoilRoot>
     <React.StrictMode>
       <App />
-    </React.StrictMode>,
-  </RecoilRoot>
-)
+    </React.StrictMode>
+  </RecoilRoot>,
+  relement
+);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

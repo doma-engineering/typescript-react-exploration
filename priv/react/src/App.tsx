@@ -4,13 +4,20 @@ import './App.css';
 import atomInt from './atom_int';
 import { useRecoilState } from 'recoil';
 import AtomInt from './AtomInt';
+import { animated, useSpring, config, useChain, useSpringRef } from '@react-spring/web';
 
 function App() {
   const [_counter, setCounter] = useRecoilState(atomInt("demo-counter"));
+  const releaseStyle = useSpring({
+    loop: true,
+    from: { transform: 'scale(0.66) rotate(0deg)' },
+    to: [{ transform: 'scale(1.33) rotate(360deg)' }, { transform: 'scale(0.66) rotate(0deg)' }],
+    config: config.wobbly,
+  });
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
+        <animated.img style={releaseStyle} src={logo} className="App-logo" alt="logo" />
         <p>
           Edit <code>src/App.tsx</code> and save to reload.
         </p>
