@@ -4,6 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { RecoilRoot } from 'recoil';
+import { Stax, TopStax } from './Stax';
 
 // const root = ReactDOM.createRoot(document.getElementById('root')!);
 // root.render(
@@ -14,11 +15,27 @@ import { RecoilRoot } from 'recoil';
 //   </RecoilRoot>
 // )
 
-const relement = document.getElementById('root')!;
+const root = document.getElementById('root');
+const stax = document.getElementById('stax');
+
+// Can routing get any more stupid than this?
+const relement = root ? root! : stax!;
+const Routed = () => {
+  if (root) {
+    return <App />;
+  } else {
+    return (
+      <TopStax>
+        <Stax />
+      </TopStax>
+    );
+  }
+}
+
 ReactDOM.render(
   <RecoilRoot>
     <React.StrictMode>
-      <App />
+      <Routed />
     </React.StrictMode>
   </RecoilRoot>,
   relement
