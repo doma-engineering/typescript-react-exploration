@@ -1,17 +1,21 @@
-import { UseSpringProps } from "@react-spring/web";
-import React, { ReactComponentElement, SetStateAction, useState } from "react";
+import { config, useSpring, UseSpringProps } from "@react-spring/web";
+import React, { ForwardedRef, MutableRefObject, MutableSourceSubscribe, ReactComponentElement, ReactElement, Ref, SetStateAction, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { RecoilState, useRecoilState } from "recoil";
+import { defBbox, SimpleDOMRect } from "./atom_bbox";
 
 // TODO: Library
 type Pt = { x: number, y: number };
 
 interface Nothing { };
 type MaybePt = Nothing | Pt;
+const isNothing = (x: MaybePt): x is Nothing => Object.keys(x).length === 0;
+const isJust = (x: MaybePt): x is Pt => Object.keys(x).length === 2;
 
-const forcePush = (source: Pt, bbox: DOMRect, opts: { force?: number, massMultiplier?: number }): UseSpringProps => {
+const forcePush = (source: Pt, bbox: SimpleDOMRect, opts?: { force?: number, massMultiplier?: number }): UseSpringProps => {
     // https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
-    const cmass = { x: bbox.left + (bbox.width / 2), y: bbox.top + (bbox.height / 2) }
-    const massMultiplier = opts.massMultiplier || 0.00075;
-    const force = opts.force || 1000;
+    const cmass = { x: bbox.x + (bbox.width / 2), y: bbox.y + (bbox.height / 2) }
+    const massMultiplier = opts && opts.massMultiplier || 0.00075;
+    const force = opts && opts.force || 100000;
 
     // TODO: Library
     //const distance = Math.sqrt(Math.pow((source.x - cmass.x), 2) + Math.pow((source.y - cmass.y), 2))
@@ -36,43 +40,62 @@ const forcePush = (source: Pt, bbox: DOMRect, opts: { force?: number, massMultip
     return { to: { x: accelerationX, y: accelerationY } };
 }
 
-export function Stax() {
-    return (<div style={{
+// TODO: `any` is a bug. Fix it.
+// export const RelativeStax = React.forwardRef((props: { clicked: MaybePt, ref: any }, ref: ForwardedRef<MutableRefObject<null>>): React.ReactElement => {
+export const RelativeStax = (props: { clicked: MaybePt, store: RecoilState<SimpleDOMRect> }): React.ReactElement => {
+    console.log("Rendering Stax with clicked", props);
+    const [affected, setAffected] = useState(false);
+    const theSquare = (<div style={{
         width: '200px',
         height: '189px',
         position: 'relative',
-        top: '33%',
         left: '20%',
+        top: '33%',
         backgroundColor: '#f4e736',
         boxShadow: '10px 10px 5px black'
-    }}></div>)
-}
-
-export function TopStax(props: { children: React.ReactChild }) {
-    const [clicked, setClicked] = useState(mkPtMaybe(null));
-    if (Object.keys(clicked).length !== 0) {
-        /* Here we want to do the following:
-
-        PER EACH CHILD (so far, only for the underlying "Stax"):
-
-         1. Generate spring specification by calling forcePush against its current bounding box
-         2. useSpring this freshly computed spring specification
-         3. When the spring is done, unset clicked (and, perhaps, some lock
-            which would prevent from responding to more clicks, but moving forward
-            it would be cool to respond to mouse movement a la particle.js snow
-            demo)
-
-        */
+    }}></div>);
+    const [bbox, _setBbox] = useRecoilState(props.store);
+    const springSpecMaybe = () => {
+        if (isJust(props.clicked) && props.store) {
+            const theX = 0.01 * parseFloat(theSquare.props.style.left) * bbox.width;
+            const theY = 0.01 * parseFloat(theSquare.props.style.top) * bbox.height;
+            const theWidth = parseFloat(theSquare.props.style.width);
+            const theHeight = parseFloat(theSquare.props.style.height);
+            const theBbox = { width: theWidth, height: theHeight, x: theX, y: theY }
+            console.log("Beep", theBbox, bbox);
+            return forcePush(props.clicked, theBbox);
+        } else {
+            return {};
+        }
     }
+    console.log(springSpecMaybe());
+    const spring = useSpring({ ...springSpecMaybe(), config: config.wobbly });
+    return <theSquare.type style={{ ...theSquare.props.style, ...spring }} />;
+};
+
+
+export const TopStax = (props: { children: React.ReactElement, store: RecoilState<SimpleDOMRect> }) => {
+    const [clicked, setClicked] = useState(mkPtMaybe(null));
+    const [_bbox, setBbox] = useRecoilState(props.store);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useLayoutEffect(() => {
+        console.log(ref);
+        setBbox(ref.current && ref.current.getBoundingClientRect() || defBbox);
+    }, [])
+
     return (
         <div
+            ref={ref}
             style={{ width: '100vw', height: '100vh', backgroundColor: '#700731' }}
-            onMouseDown={(e) => setClicked(mkPtMaybe({ x: e.clientX, y: e.clientY }))}
+            onMouseDown={(e) => {
+                setClicked(mkPtMaybe({ x: e.clientX, y: e.clientY }));
+            }}
         >
-            {props.children}
+            {React.cloneElement(props.children, { clicked, store: props.store })}
         </div>
     );
-}
+};
 
 const mkPtMaybe = (pt: null | Pt) => {
     if (!pt) {

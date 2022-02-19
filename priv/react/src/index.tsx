@@ -3,8 +3,9 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { RecoilRoot } from 'recoil';
-import { Stax, TopStax } from './Stax';
+import { atom, RecoilRoot } from 'recoil';
+import { RelativeStax, TopStax } from './Stax';
+import { atomBbox } from './atom_bbox';
 
 // const root = ReactDOM.createRoot(document.getElementById('root')!);
 // root.render(
@@ -24,9 +25,10 @@ const Routed = () => {
   if (root) {
     return <App />;
   } else {
+    const staxAtom = atomBbox('stax-demo');
     return (
-      <TopStax>
-        <Stax />
+      <TopStax store={staxAtom}>
+        <RelativeStax clicked={{}} store={staxAtom} />
       </TopStax>
     );
   }
