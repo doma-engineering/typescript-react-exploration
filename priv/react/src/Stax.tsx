@@ -1,4 +1,4 @@
-import { config, useSpring, UseSpringProps } from "@react-spring/web";
+import { animated, config, useSpring, UseSpringProps } from "@react-spring/web";
 import React, { ForwardedRef, MutableRefObject, MutableSourceSubscribe, ReactComponentElement, ReactElement, Ref, SetStateAction, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { RecoilState, useRecoilState } from "recoil";
 import { defBbox, SimpleDOMRect } from "./atom_bbox";
@@ -37,15 +37,14 @@ const forcePush = (source: Pt, bbox: SimpleDOMRect, opts?: { force?: number, mas
 
     // We handwave a little bit and say that acceleration predicts how far the spring will bounce.
     // It's wrong, but the point of react-spring is to be wrong, but realistic.
-    return { to: { x: accelerationX, y: accelerationY } };
+    return { from: { x: 0, y: 0 }, to: { x: accelerationX, y: accelerationY } };
 }
 
 // TODO: `any` is a bug. Fix it.
 // export const RelativeStax = React.forwardRef((props: { clicked: MaybePt, ref: any }, ref: ForwardedRef<MutableRefObject<null>>): React.ReactElement => {
 export const RelativeStax = (props: { clicked: MaybePt, store: RecoilState<SimpleDOMRect> }): React.ReactElement => {
-    console.log("Rendering Stax with clicked", props);
     const [affected, setAffected] = useState(false);
-    const theSquare = (<div style={{
+    const theSquare = (<animated.div style={{
         width: '200px',
         height: '189px',
         position: 'relative',
@@ -53,7 +52,7 @@ export const RelativeStax = (props: { clicked: MaybePt, store: RecoilState<Simpl
         top: '33%',
         backgroundColor: '#f4e736',
         boxShadow: '10px 10px 5px black'
-    }}></div>);
+    }}></animated.div>);
     const [bbox, _setBbox] = useRecoilState(props.store);
     const springSpecMaybe = () => {
         if (isJust(props.clicked) && props.store) {
@@ -62,14 +61,14 @@ export const RelativeStax = (props: { clicked: MaybePt, store: RecoilState<Simpl
             const theWidth = parseFloat(theSquare.props.style.width);
             const theHeight = parseFloat(theSquare.props.style.height);
             const theBbox = { width: theWidth, height: theHeight, x: theX, y: theY }
-            console.log("Beep", theBbox, bbox);
             return forcePush(props.clicked, theBbox);
         } else {
             return {};
         }
     }
-    console.log(springSpecMaybe());
+    console.log({ ...springSpecMaybe(), config: config.wobbly });
     const spring = useSpring({ ...springSpecMaybe(), config: config.wobbly });
+    console.log(spring);
     return <theSquare.type style={{ ...theSquare.props.style, ...spring }} />;
 };
 
@@ -80,7 +79,6 @@ export const TopStax = (props: { children: React.ReactElement, store: RecoilStat
     const ref = useRef<HTMLDivElement>(null);
 
     useLayoutEffect(() => {
-        console.log(ref);
         setBbox(ref.current && ref.current.getBoundingClientRect() || defBbox);
     }, [])
 
