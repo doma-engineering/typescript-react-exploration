@@ -108,7 +108,7 @@ export const TopStax = (props: { children: React.ReactElement, store: RecoilStat
             ref={ref}
             style={{ width: '50vw', height: '50vh', backgroundColor: '#700731', position: "absolute", top: '10vh', left: '14vh' }}
             onMouseDown={(e) => {
-                setClicked(mkPtMaybe({ x: e.clientX, y: e.clientY }));
+                setClicked(mkPtMaybe({ x: e.pageX, y: e.pageY }));
             }}
         >
             {React.cloneElement(props.children, { clicked, store: props.store })}
