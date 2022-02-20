@@ -14,26 +14,44 @@ const isJust = (x: MaybePt): x is Pt => Object.keys(x).length === 2;
 const forcePush = (source: Pt, bbox: SimpleDOMRect, opts?: { force?: number, massMultiplier?: number }): UseSpringProps => {
     // https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
     const cmass = { x: bbox.x + (bbox.width / 2), y: bbox.y + (bbox.height / 2) }
-    const massMultiplier = opts && opts.massMultiplier || 0.00075;
-    const force = opts && opts.force || 100000;
+    const massMultiplier = opts && opts.massMultiplier || 0.0075;
+    const force = opts && opts.force || 10000000;
 
     // TODO: Library
     //const distance = Math.sqrt(Math.pow((source.x - cmass.x), 2) + Math.pow((source.y - cmass.y), 2))
     const mass = massMultiplier * bbox.width * bbox.height;
     const signX = (cmass.x > source.x) ? +1 : -1;
     const accelerationX =
-        (force / mass) /
-        Math.max(
-            signX * (bbox.width / 2),
-            (cmass.x - source.x)
+        (force / mass) / Math.pow(
+            (signX *
+                Math.max(
+                    10,
+                    Math.abs(cmass.x - source.x)
+                )),
+            2
         );
     const signY = (cmass.y > source.y) ? +1 : -1;
     const accelerationY =
-        (force / mass) /
-        Math.max(
-            signY * (bbox.width / 2),
-            (cmass.y - source.y)
+        (force / mass) / Math.pow(
+            (signY *
+                Math.max(
+                    10,
+                    Math.abs(cmass.y - source.y)
+                )),
+            2
         );
+
+    console.log("Calculated spring movement", JSON.stringify({
+        source,
+        bbox,
+        mass,
+        cmass,
+        force,
+        accelerationX,
+        accelerationY,
+        sourceDelta: { x: cmass.x - source.x, y: cmass.y - source.y }
+    }, null, 4));
+
 
     // We handwave a little bit and say that acceleration predicts how far the spring will bounce.
     // It's wrong, but the point of react-spring is to be wrong, but realistic.
@@ -55,9 +73,13 @@ export const RelativeStax = (props: { clicked: MaybePt, store: RecoilState<Simpl
     }}></animated.div>);
     const [bbox, _setBbox] = useRecoilState(props.store);
     const springSpecMaybe = () => {
+        // TODO this will *never work*!
+        // Because if we want to keep track of the actual bounding box of
+        // "theSquare", we would need to ref it up and trigger useSpring in
+        // useEffectLayout hook! (Just like we push the ref through in "TopStax" component)
         if (isJust(props.clicked) && props.store) {
-            const theX = 0.01 * parseFloat(theSquare.props.style.left) * bbox.width;
-            const theY = 0.01 * parseFloat(theSquare.props.style.top) * bbox.height;
+            const theX = bbox.x + 0.01 * parseFloat(theSquare.props.style.left) * bbox.width;
+            const theY = bbox.y + 0.01 * parseFloat(theSquare.props.style.top) * bbox.height;
             const theWidth = parseFloat(theSquare.props.style.width);
             const theHeight = parseFloat(theSquare.props.style.height);
             const theBbox = { width: theWidth, height: theHeight, x: theX, y: theY }
@@ -68,7 +90,6 @@ export const RelativeStax = (props: { clicked: MaybePt, store: RecoilState<Simpl
     }
     console.log({ ...springSpecMaybe(), config: config.wobbly });
     const spring = useSpring({ ...springSpecMaybe(), config: config.wobbly });
-    console.log(spring);
     return <theSquare.type style={{ ...theSquare.props.style, ...spring }} />;
 };
 
@@ -85,7 +106,7 @@ export const TopStax = (props: { children: React.ReactElement, store: RecoilStat
     return (
         <div
             ref={ref}
-            style={{ width: '100vw', height: '100vh', backgroundColor: '#700731' }}
+            style={{ width: '50vw', height: '50vh', backgroundColor: '#700731', position: "absolute", top: '10vh', left: '14vh' }}
             onMouseDown={(e) => {
                 setClicked(mkPtMaybe({ x: e.clientX, y: e.clientY }));
             }}
