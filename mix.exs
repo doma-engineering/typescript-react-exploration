@@ -23,7 +23,7 @@ defmodule MVReact.MixProject do
   defp deps do
     [
       # {:arclight, path: "../arclight"},
-      {:arclight, "~> 0.3.0-pre"},
+      {:arclight, "~> 0.3.10-pre"},
       {:dyn_hacks, "~> 0.1.0"},
       {:doma, "~> 1.0.0"}
     ]
